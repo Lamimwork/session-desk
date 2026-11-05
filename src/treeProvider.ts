@@ -93,11 +93,12 @@ export class SessionsTreeProvider
       const custom = node.key.startsWith("group:");
       const name = custom ? groupLabel(node.label, this.stores) : node.label;
       // A custom group's header counts its open sessions and its closed ones separately.
-      const item = node.closed
+      const counts = vscode.workspace.getConfiguration("claudeSessionOrganizer").get<boolean>("showGroupCounts", true);
+      const item = node.closed || !counts
         ? new vscode.TreeItem(name, state)
         : new vscode.TreeItem(`${name} (${node.children.length})`, state);
       const parts: string[] = [];
-      if (node.closed) parts.push(`${node.children.length} open · ${node.closed.length} closed`);
+      if (node.closed && counts) parts.push(`${node.children.length} open · ${node.closed.length} closed`);
       const unread = [...node.children, ...(node.closed ?? [])].filter((s) => this.stores.unread.has(s.sessionId)).length;
       if (unread) parts.push(`${unread} unread`);
       if (parts.length) item.description = parts.join(" · ");

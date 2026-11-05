@@ -4,6 +4,7 @@
 
 - Unread replies: when a session finishes working and you are not looking at it, it gets a blue dot, its group header shows "N unread", and the status bar counts them. Opening the session (from the list or by switching to its editor tab) clears it; there is also "Mark as Read" on a session and "Mark All as Read" in the view menu.
 - Group look: right-click a custom group → "Set Group Emoji" or "Set Group Color" (colors the folder icon and the name, following the theme). Font, size and background can't be changed by extensions.
+- "Hide Group Counts" / "Show Group Counts" in the view menu (setting `claudeSessionOrganizer.showGroupCounts`): hides the "(5)" and "2 open · 7 closed" next to group names. Unread counts stay.
 
 ## 0.7.8
 

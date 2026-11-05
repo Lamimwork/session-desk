@@ -15,6 +15,16 @@
   "homepage": "https://github.com/sssooonnnggg/claude-session-organizer#readme",
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Claude Session Organizer",
+      "properties": {
+        "claudeSessionOrganizer.showGroupCounts": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show session counts next to group names (\"(5)\", \"2 open · 7 closed\"). Unread counts are always shown."
+        }
+      }
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -47,6 +57,8 @@
       { "command": "claudeSessionOrganizer.sessions.unarchive", "title": "Unarchive Session", "category": "Claude Session Organizer", "icon": "$(inbox)" },
       { "command": "claudeSessionOrganizer.sessions.archiveOld", "title": "Archive Old Sessions…", "category": "Claude Session Organizer", "icon": "$(archive)" },
       { "command": "claudeSessionOrganizer.sessions.markRead", "title": "Mark as Read", "category": "Claude Session Organizer", "icon": "$(check)" },
+      { "command": "claudeSessionOrganizer.view.hideCounts", "title": "Hide Group Counts", "category": "Claude Session Organizer" },
+      { "command": "claudeSessionOrganizer.view.showCounts", "title": "Show Group Counts", "category": "Claude Session Organizer" },
       { "command": "claudeSessionOrganizer.sessions.markAllRead", "title": "Mark All as Read", "category": "Claude Session Organizer", "icon": "$(check-all)" },
       { "command": "claudeSessionOrganizer.groups.setEmoji", "title": "Set Group Emoji", "category": "Claude Session Organizer", "icon": "$(smiley)" },
       { "command": "claudeSessionOrganizer.groups.setColor", "title": "Set Group Color", "category": "Claude Session Organizer", "icon": "$(symbol-color)" }
@@ -77,7 +89,9 @@
         { "command": "claudeSessionOrganizer.sessions.search", "when": "view == claudeSessionOrganizer.sessions", "group": "navigation@1" },
         { "command": "claudeSessionOrganizer.sessions.archiveOld", "when": "view == claudeSessionOrganizer.sessions", "group": "navigation@2" },
         { "command": "claudeSessionOrganizer.sessions.refresh", "when": "view == claudeSessionOrganizer.sessions", "group": "navigation@3" },
-        { "command": "claudeSessionOrganizer.sessions.markAllRead", "when": "view == claudeSessionOrganizer.sessions", "group": "1_unread" }
+        { "command": "claudeSessionOrganizer.sessions.markAllRead", "when": "view == claudeSessionOrganizer.sessions", "group": "1_unread" },
+        { "command": "claudeSessionOrganizer.view.hideCounts", "when": "view == claudeSessionOrganizer.sessions && config.claudeSessionOrganizer.showGroupCounts", "group": "2_view" },
+        { "command": "claudeSessionOrganizer.view.showCounts", "when": "view == claudeSessionOrganizer.sessions && !config.claudeSessionOrganizer.showGroupCounts", "group": "2_view" }
       ],
       "view/item/context": [
         { "command": "claudeSessionOrganizer.sessions.rename", "when": "view == claudeSessionOrganizer.sessions && viewItem =~ /Session$/", "group": "inline@1" },

@@ -174,6 +174,11 @@ export function registerCommands(
       const ids = (all ?? [node]).map((n) => n?.meta?.sessionId).filter((id): id is string => !!id);
       if (ids.length) await markRead(ids);
     }),
+    vscode.commands.registerCommand("claudeSessionOrganizer.view.hideCounts", () =>
+      vscode.workspace.getConfiguration("claudeSessionOrganizer").update("showGroupCounts", false, vscode.ConfigurationTarget.Global)),
+    vscode.commands.registerCommand("claudeSessionOrganizer.view.showCounts", () =>
+      vscode.workspace.getConfiguration("claudeSessionOrganizer").update("showGroupCounts", true, vscode.ConfigurationTarget.Global)),
+    vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration("claudeSessionOrganizer")) refresh(); }),
     vscode.commands.registerCommand("claudeSessionOrganizer.sessions.markAllRead", () => markRead(stores.unread.list())),
     vscode.commands.registerCommand("claudeSessionOrganizer.groups.setEmoji", async (node: { key?: string; label?: string }) => {
       if (!node?.key?.startsWith("group:") || !node.label) return;
