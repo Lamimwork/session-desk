@@ -5,6 +5,11 @@ import { SessionsTreeProvider } from "./treeProvider";
 export interface TabSync {
   /** Map the currently active Claude tab to the session we just opened. */
   track(sessionId: string): void;
+  /**
+   * Sessions shown in a visible Claude editor tab (the active tab of each editor
+   * group). Tabs opened through this list are known; others are matched by title.
+   */
+  visibleSessions(lookup: (tabLabel: string) => string | undefined): string[];
 }
 
 /** True only when a tab just went from unpinned to pinned. */
@@ -48,6 +53,16 @@ export function registerTabSync(
   );
 
   return {
+    visibleSessions(lookup) {
+      const out: string[] = [];
+      for (const group of vscode.window.tabGroups.all) {
+        const tab = group.activeTab;
+        if (!tab || !isClaudeTab(tab)) continue;
+        const id = tabToSession.get(tab) ?? lookup(tab.label);
+        if (id) out.push(id);
+      }
+      return out;
+    },
     track(sessionId: string): void {
       const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
       if (tab && isClaudeTab(tab)) {

@@ -16,6 +16,17 @@ export class GroupStore extends KeyedStore {
 export class ArchiveStore extends SetStore {
   constructor(memento: MementoLike) { super(memento, "archivedSessions"); }
 }
+/** Sessions that finished a reply the user has not opened yet. */
+export class UnreadStore extends SetStore {
+  constructor(memento: MementoLike) { super(memento, "unreadSessions"); }
+}
+/** Per-group look, keyed by group name. */
+export class GroupEmojiStore extends KeyedStore {
+  constructor(memento: MementoLike) { super(memento, "groupEmojis"); }
+}
+export class GroupColorStore extends KeyedStore {
+  constructor(memento: MementoLike) { super(memento, "groupColors"); }
+}
 
 /** All per-session stores, passed together to the tree and commands. */
 export interface SessionStores {
@@ -25,4 +36,7 @@ export interface SessionStores {
   colors: ColorStore;
   groups: GroupStore;
   archive: ArchiveStore;
+  unread: UnreadStore;
+  groupEmojis: GroupEmojiStore;
+  groupColors: GroupColorStore;
 }

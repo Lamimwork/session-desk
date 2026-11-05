@@ -3,7 +3,8 @@ import type { SessionMeta } from "./types";
 import { buildGroups, buildSections, byDate } from "./sessionsModel";
 import { TitleCache } from "./sessionScanner";
 import { formatRelative } from "./relativeTime";
-import { sessionLabel } from "./display";
+import { sessionLabel, groupLabel } from "./display";
+import { sessionUri, groupUri } from "./decorations";
 import type { SessionStores } from "./sessionStores";
 import { resolveDropAction, type DropTarget } from "./dropLogic";
 import type { LiveStatus } from "./liveStatus";
@@ -89,23 +90,35 @@ export class SessionsTreeProvider
       const def = node.key === "pinned" || node.key === "today" || node.key === "ungrouped" || node.key.startsWith("group:");
       const expanded = this.expansion.get(node.key) ?? def;
       const state = expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed;
+      const custom = node.key.startsWith("group:");
+      const name = custom ? groupLabel(node.label, this.stores) : node.label;
       // A custom group's header counts its open sessions and its closed ones separately.
       const item = node.closed
-        ? new vscode.TreeItem(node.label, state)
-        : new vscode.TreeItem(`${node.label} (${node.children.length})`, state);
-      if (node.closed) item.description = `${node.children.length} open · ${node.closed.length} closed`;
+        ? new vscode.TreeItem(name, state)
+        : new vscode.TreeItem(`${name} (${node.children.length})`, state);
+      const parts: string[] = [];
+      if (node.closed) parts.push(`${node.children.length} open · ${node.closed.length} closed`);
+      const unread = [...node.children, ...(node.closed ?? [])].filter((s) => this.stores.unread.has(s.sessionId)).length;
+      if (unread) parts.push(`${unread} unread`);
+      if (parts.length) item.description = parts.join(" · ");
       item.id = node.key;
-      item.contextValue = "group";
+      item.contextValue = custom ? "customGroup" : "group";
+      if (custom) {
+        const color = this.stores.groupColors.get(node.label);
+        item.iconPath = new vscode.ThemeIcon("folder", color ? new vscode.ThemeColor(color) : undefined);
+        item.resourceUri = groupUri(node.label);
+      }
       return item;
     }
     const item = new vscode.TreeItem(sessionLabel(node.meta, this.stores), vscode.TreeItemCollapsibleState.None);
     item.id = node.meta.sessionId;
+    item.resourceUri = sessionUri(node.meta.sessionId);
     const live = this.liveStatuses()?.get(node.meta.sessionId);
     const relative = formatRelative(node.meta.mtimeMs, this.now());
     item.description = live ? `${LIVE_LABEL[live.state]} · ${relative}` : relative;
     item.tooltip = `${node.meta.title}\n${node.meta.sessionId}` +
-      (live ? `\n${LIVE_LABEL[live.state]}${live.waitingFor ? ` (${live.waitingFor})` : ""}` : "");
-    item.contextValue = node.archived ? "archivedSession" : node.pinned ? "pinnedSession" : "unpinnedSession";
+      (live ? `\n${LIVE_LABEL[live.state]}${live.waitingFor ? ` (${live.waitingFor})` : ""}` : "") +
+      (this.stores.unread.has(node.meta.sessionId) ? "\nUnread reply" : "");    item.contextValue = node.archived ? "archivedSession" : node.pinned ? "pinnedSession" : "unpinnedSession";
     item.iconPath = live
       ? LIVE_ICON[live.state]
       : new vscode.ThemeIcon(node.archived ? "archive" : node.pinned ? "pinned" : "comment-discussion");

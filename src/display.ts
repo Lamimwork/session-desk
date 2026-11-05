@@ -13,3 +13,9 @@ export function sessionLabel(meta: SessionMeta, stores: SessionStores): string {
   const prefix = [stores.colors.get(meta.sessionId), stores.emojis.get(meta.sessionId)].filter(Boolean).join("");
   return prefix ? `${prefix} ${name}` : name;
 }
+
+/** Custom group header label: `[emoji] name`. */
+export function groupLabel(name: string, stores: SessionStores): string {
+  const emoji = stores.groupEmojis.get(name);
+  return emoji ? `${emoji} ${name}` : name;
+}

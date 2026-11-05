@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { displayName } from "../src/display";
-import { sessionLabel } from "../src/display";
+import { sessionLabel, groupLabel } from "../src/display";
 import { NameStore } from "../src/nameStore";
 import { PinStore } from "../src/pinStore";
-import { EmojiStore, ColorStore, GroupStore, ArchiveStore } from "../src/sessionStores";
+import { EmojiStore, ColorStore, GroupStore, ArchiveStore, UnreadStore, GroupEmojiStore, GroupColorStore } from "../src/sessionStores";
 import type { SessionStores } from "../src/sessionStores";
 import type { MementoLike, SessionMeta } from "../src/types";
 
@@ -41,6 +41,9 @@ function makeStores(): SessionStores {
     colors: new ColorStore(m),
     groups: new GroupStore(m),
     archive: new ArchiveStore(m),
+    unread: new UnreadStore(m),
+    groupEmojis: new GroupEmojiStore(m),
+    groupColors: new GroupColorStore(m),
   };
 }
 
@@ -69,5 +72,14 @@ describe("sessionLabel", () => {
     await stores.names.set("id1", "My session");
     await stores.colors.set("id1", "🔵");
     expect(sessionLabel(meta(), stores)).toBe("🔵 My session");
+  });
+});
+
+describe("groupLabel", () => {
+  it("prefixes the group emoji when set", async () => {
+    const stores = makeStores();
+    expect(groupLabel("Work", stores)).toBe("Work");
+    await stores.groupEmojis.set("Work", "🚀");
+    expect(groupLabel("Work", stores)).toBe("🚀 Work");
   });
 });

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.9
+
+- Unread replies: when a session finishes working and you are not looking at it, it gets a blue dot, its group header shows "N unread", and the status bar counts them. Opening the session (from the list or by switching to its editor tab) clears it; there is also "Mark as Read" on a session and "Mark All as Read" in the view menu.
+- Group look: right-click a custom group → "Set Group Emoji" or "Set Group Color" (colors the folder icon and the name, following the theme). Font, size and background can't be changed by extensions.
+
 ## 0.7.8
 
 - Split open and closed sessions, using Claude Code's live registry: each custom group lists its open sessions, with the closed ones in a collapsed "Closed" sub-section; open sessions without a group go to "Ungrouped", closed ones to a collapsed "History" (by date). Pinned and Archived are unchanged. Without the registry, the previous layout is kept.

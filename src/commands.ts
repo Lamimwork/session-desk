@@ -5,6 +5,7 @@ import type { SessionMeta } from "./types";
 import type { SessionStores } from "./sessionStores";
 import { SessionsTreeProvider } from "./treeProvider";
 import { staleSessions } from "./sessionsModel";
+import { GROUP_COLORS } from "./decorations";
 
 const OFFICIAL_OPEN = "claude-vscode.editor.open";
 const OFFICIAL_NEW = "claude-vscode.newConversation";
@@ -42,10 +43,20 @@ export function registerCommands(
   load: () => Promise<SessionMeta[]>,
   track: (sessionId: string) => void,
   isOpen: (sessionId: string) => boolean = () => false,
+  onUnreadChange: () => void = () => {},
 ): void {
   const { pins, names } = stores;
   const refresh = () => provider.refresh();
-  const openAndTrack = async (id: string) => { await openSession(id); track(id); };
+  const markRead = async (ids: string[]) => {
+    for (const id of ids) await stores.unread.remove(id);
+    onUnreadChange();
+    refresh();
+  };
+  const openAndTrack = async (id: string) => {
+    await openSession(id);
+    track(id);
+    if (stores.unread.has(id)) await markRead([id]);
+  };
   context.subscriptions.push(
     vscode.commands.registerCommand("claudeSessionOrganizer.sessions.open", (sessionId: string) => openAndTrack(sessionId)),
     vscode.commands.registerCommand("claudeSessionOrganizer.sessions.new", () => openNewSession()),
@@ -82,6 +93,7 @@ export function registerCommands(
         await stores.colors.clear(node.meta.sessionId);
         await stores.groups.clear(node.meta.sessionId);
         await stores.archive.remove(node.meta.sessionId);
+        await stores.unread.remove(node.meta.sessionId);
       } catch (e) {
         void vscode.window.showErrorMessage(`Could not delete session: ${e instanceof Error ? e.message : String(e)}`);
       }
@@ -157,6 +169,29 @@ export function registerCommands(
     }),
     vscode.commands.registerCommand("claudeSessionOrganizer.sessions.unarchive", async (node: { meta?: { sessionId: string } }) => {
       if (node?.meta) { await stores.archive.remove(node.meta.sessionId); refresh(); }
+    }),
+    vscode.commands.registerCommand("claudeSessionOrganizer.sessions.markRead", async (node: { meta?: { sessionId: string } }, all?: { meta?: { sessionId: string } }[]) => {
+      const ids = (all ?? [node]).map((n) => n?.meta?.sessionId).filter((id): id is string => !!id);
+      if (ids.length) await markRead(ids);
+    }),
+    vscode.commands.registerCommand("claudeSessionOrganizer.sessions.markAllRead", () => markRead(stores.unread.list())),
+    vscode.commands.registerCommand("claudeSessionOrganizer.groups.setEmoji", async (node: { key?: string; label?: string }) => {
+      if (!node?.key?.startsWith("group:") || !node.label) return;
+      const current = stores.groupEmojis.get(node.label) ?? "";
+      const input = await vscode.window.showInputBox({ value: current, prompt: `Emoji for group "${node.label}" (leave empty to clear)` });
+      if (input === undefined) return;
+      await stores.groupEmojis.set(node.label, input);
+      refresh();
+    }),
+    vscode.commands.registerCommand("claudeSessionOrganizer.groups.setColor", async (node: { key?: string; label?: string }) => {
+      if (!node?.key?.startsWith("group:") || !node.label) return;
+      const pick = await vscode.window.showQuickPick(
+        [...GROUP_COLORS, { label: "None", value: "" }],
+        { placeHolder: `Color for group "${node.label}"` },
+      );
+      if (!pick) return;
+      await stores.groupColors.set(node.label, pick.value);
+      refresh();
     }),
     vscode.commands.registerCommand("claudeSessionOrganizer.sessions.archiveOld", async () => {
       const CUSTOM = "Custom…";
