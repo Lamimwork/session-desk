@@ -5,6 +5,18 @@ import { formatRelative } from "./relativeTime";
 import { sessionLabel } from "./display";
 import type { SessionStores } from "./sessionStores";
 import { resolveDropAction, type DropTarget } from "./dropLogic";
+import type { LiveStatus } from "./liveStatus";
+
+const LIVE_ICON: Record<LiveStatus["state"], vscode.ThemeIcon> = {
+  working: new vscode.ThemeIcon("loading~spin", new vscode.ThemeColor("charts.green")),
+  waiting: new vscode.ThemeIcon("bell-dot", new vscode.ThemeColor("charts.orange")),
+  idle: new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("disabledForeground")),
+};
+const LIVE_LABEL: Record<LiveStatus["state"], string> = {
+  working: "working",
+  waiting: "needs you",
+  idle: "idle",
+};
 
 const DND_MIME = "application/vnd.code.tree.claudeSessionOrganizer";
 
@@ -29,6 +41,7 @@ export class SessionsTreeProvider
     private readonly load: () => Promise<SessionMeta[]>,
     private readonly stores: SessionStores,
     private readonly now: () => number = () => Date.now(),
+    private readonly liveStatusOf: (sessionId: string) => LiveStatus | undefined = () => undefined,
   ) {}
 
   refresh(): void { this._onDidChange.fire(); }
@@ -81,10 +94,15 @@ export class SessionsTreeProvider
     }
     const item = new vscode.TreeItem(sessionLabel(node.meta, this.stores), vscode.TreeItemCollapsibleState.None);
     item.id = node.meta.sessionId;
-    item.description = formatRelative(node.meta.mtimeMs, this.now());
-    item.tooltip = `${node.meta.title}\n${node.meta.sessionId}`;
+    const live = this.liveStatusOf(node.meta.sessionId);
+    const relative = formatRelative(node.meta.mtimeMs, this.now());
+    item.description = live ? `${LIVE_LABEL[live.state]} · ${relative}` : relative;
+    item.tooltip = `${node.meta.title}\n${node.meta.sessionId}` +
+      (live ? `\n${LIVE_LABEL[live.state]}${live.waitingFor ? ` (${live.waitingFor})` : ""}` : "");
     item.contextValue = node.archived ? "archivedSession" : node.pinned ? "pinnedSession" : "unpinnedSession";
-    item.iconPath = new vscode.ThemeIcon(node.archived ? "archive" : node.pinned ? "pinned" : "comment-discussion");
+    item.iconPath = live
+      ? LIVE_ICON[live.state]
+      : new vscode.ThemeIcon(node.archived ? "archive" : node.pinned ? "pinned" : "comment-discussion");
     item.command = { command: "claudeSessionOrganizer.sessions.open", title: "Open Session", arguments: [node.meta.sessionId] };
     return item;
   }

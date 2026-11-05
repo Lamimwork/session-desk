@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.7
+
+- Show the session's real name: the one set by the user (`custom-title`), else Claude Code's auto title (`ai-title`), else the first prompt. Also skip the `<local-command-caveat>` and `<browser_instruction>` blocks the VS Code extension injects, which were showing up as titles.
+- Show live state per session (working / needs you / idle), read from the registry Claude Code keeps in `~/.claude/sessions`, plus a status-bar count of sessions working or waiting for you.
+
 ## 0.7.6
 
 - Remove the list ↔ editor-tab selection sync entirely (it kept fighting with clicking to open). Clicking a session just opens it now; the list selection is left to VS Code's native behavior, so it no longer jumps to a different session.

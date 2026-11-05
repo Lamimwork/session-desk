@@ -44,6 +44,30 @@ describe("titleOf", () => {
     const jsonl = JSON.stringify({ type: "user", message: { role: "user", content: "Plain string prompt" } });
     expect(titleOf(jsonl)).toBe("Plain string prompt");
   });
+  it("skips context blocks the VS Code extension injects before the prompt", () => {
+    const jsonl = [
+      userText("<local-command-caveat>Caveat: the command below…</local-command-caveat>"),
+      userText("<browser_instruction># Claude in Chrome…</browser_instruction>"),
+      userText("Real question here"),
+    ].join("\n");
+    expect(titleOf(jsonl)).toBe("Real question here");
+  });
+  it("prefers the auto-generated title over the first prompt, using the latest one", () => {
+    const jsonl = [
+      userText("First prompt"),
+      JSON.stringify({ type: "ai-title", aiTitle: "Old title" }),
+      JSON.stringify({ type: "ai-title", aiTitle: "Newer title" }),
+    ].join("\n");
+    expect(titleOf(jsonl)).toBe("Newer title");
+  });
+  it("prefers the user-set title over the auto-generated one", () => {
+    const jsonl = [
+      JSON.stringify({ type: "custom-title", customTitle: "My name" }),
+      userText("First prompt"),
+      JSON.stringify({ type: "ai-title", aiTitle: "Auto title" }),
+    ].join("\n");
+    expect(titleOf(jsonl)).toBe("My name");
+  });
 });
 
 describe("scanSessions", () => {
