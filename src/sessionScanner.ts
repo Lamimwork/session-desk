@@ -58,8 +58,11 @@ function fallbackTitle(sessionId: string): string {
   return `Session ${sessionId.slice(0, 8)}`;
 }
 
-/** Scan a ~/.claude/projects/<encoded> directory into session metadata, mtime desc. */
-export async function scanSessions(projectsDir: string): Promise<SessionMeta[]> {
+/**
+ * List the sessions in a ~/.claude/projects/<encoded> directory, mtime desc,
+ * without reading the transcripts: `title` is left empty. Use TitleCache to fill it.
+ */
+export async function listSessions(projectsDir: string): Promise<SessionMeta[]> {
   let entries: string[];
   try { entries = await fs.readdir(projectsDir); }
   catch { return []; }
@@ -71,11 +74,31 @@ export async function scanSessions(projectsDir: string): Promise<SessionMeta[]> 
     const full = path.join(projectsDir, name);
     try {
       const stat = await fs.stat(full);
-      const text = await fs.readFile(full, "utf8");
-      const title = titleOf(text) || fallbackTitle(sessionId);
-      out.push({ sessionId, mtimeMs: stat.mtimeMs, title, filePath: full });
+      out.push({ sessionId, mtimeMs: stat.mtimeMs, title: "", filePath: full });
     } catch { /* skip unreadable file */ }
   }
   out.sort((a, b) => b.mtimeMs - a.mtimeMs);
   return out;
+}
+
+/** Reads titles on demand and keeps them until the transcript changes. */
+export class TitleCache {
+  private readonly cache = new Map<string, { mtimeMs: number; title: string }>();
+
+  async fill(sessions: SessionMeta[]): Promise<SessionMeta[]> {
+    return Promise.all(sessions.map(async (s) => {
+      const hit = this.cache.get(s.filePath);
+      if (hit && hit.mtimeMs === s.mtimeMs) return { ...s, title: hit.title };
+      let title: string;
+      try { title = titleOf(await fs.readFile(s.filePath, "utf8")) || fallbackTitle(s.sessionId); }
+      catch { title = fallbackTitle(s.sessionId); }
+      this.cache.set(s.filePath, { mtimeMs: s.mtimeMs, title });
+      return { ...s, title };
+    }));
+  }
+}
+
+/** Scan a ~/.claude/projects/<encoded> directory into session metadata with titles, mtime desc. */
+export async function scanSessions(projectsDir: string): Promise<SessionMeta[]> {
+  return new TitleCache().fill(await listSessions(projectsDir));
 }

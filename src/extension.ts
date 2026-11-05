@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as os from "node:os";
 import * as path from "node:path";
 import { encodeProjectDir } from "./pathEncoder";
-import { scanSessions } from "./sessionScanner";
+import { listSessions, TitleCache } from "./sessionScanner";
 import { PinStore } from "./pinStore";
 import { NameStore } from "./nameStore";
 import { EmojiStore, ColorStore, GroupStore, ArchiveStore } from "./sessionStores";
@@ -14,6 +14,8 @@ import { readLiveStatuses, statusKey, type LiveStatus } from "./liveStatus";
 
 /** How often to re-check the live registry, so sessions whose process died drop out. */
 const LIVE_POLL_MS = 5_000;
+/** Transcripts are written continuously while a session works; batch the refreshes. */
+const REFRESH_DEBOUNCE_MS = 1_000;
 
 function projectsDirFor(workspacePath: string): string {
   return path.join(os.homedir(), ".claude", "projects", encodeProjectDir(workspacePath));
@@ -31,9 +33,11 @@ export function activate(context: vscode.ExtensionContext): void {
     groups: new GroupStore(context.globalState),
     archive: new ArchiveStore(context.globalState),
   };
-  const load = () => (dir ? scanSessions(dir) : Promise.resolve([]));
-  let liveStatuses = new Map<string, LiveStatus>();
-  const provider = new SessionsTreeProvider(load, stores, undefined, (id) => liveStatuses.get(id));
+  const load = () => (dir ? listSessions(dir) : Promise.resolve([]));
+  const titles = new TitleCache();
+  const loadWithTitles = async () => titles.fill(await load());
+  let liveStatuses: Map<string, LiveStatus> | undefined;
+  const provider = new SessionsTreeProvider(load, stores, undefined, () => liveStatuses, titles);
 
   const treeView = vscode.window.createTreeView("claudeSessionOrganizer.sessions", {
     treeDataProvider: provider,
@@ -45,16 +49,21 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(treeView);
 
   const tabSync = registerTabSync(context, stores.pins, provider);
-  registerCommands(context, stores, provider, load, tabSync.track);
+  registerCommands(context, stores, provider, loadWithTitles, tabSync.track, (id) => liveStatuses?.has(id) ?? false);
 
   if (dir) {
     const watcher = vscode.workspace.createFileSystemWatcher(
       new vscode.RelativePattern(dir, "*.jsonl"),
     );
-    watcher.onDidCreate(() => provider.refresh());
-    watcher.onDidChange(() => provider.refresh());
-    watcher.onDidDelete(() => provider.refresh());
-    context.subscriptions.push(watcher);
+    let pending: ReturnType<typeof setTimeout> | undefined;
+    const refreshSoon = () => {
+      if (pending) clearTimeout(pending);
+      pending = setTimeout(() => { pending = undefined; provider.refresh(); }, REFRESH_DEBOUNCE_MS);
+    };
+    watcher.onDidCreate(refreshSoon);
+    watcher.onDidChange(refreshSoon);
+    watcher.onDidDelete(refreshSoon);
+    context.subscriptions.push(watcher, { dispose: () => { if (pending) clearTimeout(pending); } });
   }
 
   // Live state (working / needs you / idle) from the registry Claude Code keeps
@@ -71,7 +80,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (key === lastKey) return;
     lastKey = key;
     liveStatuses = next;
-    const states = [...next.values()].map((s) => s.state);
+    const states = [...(next?.values() ?? [])].map((s) => s.state);
     const working = states.filter((s) => s === "working").length;
     const waiting = states.filter((s) => s === "waiting").length;
     const parts: string[] = [];

@@ -36,12 +36,14 @@ function isRunning(pid: number): boolean {
 /**
  * Read the live-session registry, keyed by session id. Entries whose process
  * is gone are skipped, since Claude Code can leave them behind after a crash.
+ * Returns undefined when there is no registry (older Claude Code), so callers
+ * can fall back to not telling open and closed sessions apart.
  */
-export async function readLiveStatuses(sessionsDir: string): Promise<Map<string, LiveStatus>> {
+export async function readLiveStatuses(sessionsDir: string): Promise<Map<string, LiveStatus> | undefined> {
   const out = new Map<string, LiveStatus>();
   let entries: string[];
   try { entries = await fs.readdir(sessionsDir); }
-  catch { return out; }
+  catch { return undefined; }
   for (const name of entries) {
     if (!name.endsWith(".json")) continue;
     let text: string;
@@ -56,7 +58,8 @@ export async function readLiveStatuses(sessionsDir: string): Promise<Map<string,
 }
 
 /** Stable string form, used to skip refreshes when nothing changed. */
-export function statusKey(statuses: Map<string, LiveStatus>): string {
+export function statusKey(statuses: Map<string, LiveStatus> | undefined): string {
+  if (!statuses) return "unavailable";
   return [...statuses.entries()]
     .map(([id, s]) => `${id}:${s.state}:${s.waitingFor ?? ""}`)
     .sort()

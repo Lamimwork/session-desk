@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import type { SessionMeta } from "./types";
-import { buildGroups } from "./sessionsModel";
+import { buildGroups, buildSections, byDate } from "./sessionsModel";
+import { TitleCache } from "./sessionScanner";
 import { formatRelative } from "./relativeTime";
 import { sessionLabel } from "./display";
 import type { SessionStores } from "./sessionStores";
@@ -21,7 +22,7 @@ const LIVE_LABEL: Record<LiveStatus["state"], string> = {
 const DND_MIME = "application/vnd.code.tree.claudeSessionOrganizer";
 
 type Node =
-  | { kind: "group"; key: string; label: string; children: SessionMeta[] }
+  | { kind: "group"; key: string; label: string; children: SessionMeta[]; closed?: SessionMeta[]; dated?: boolean }
   | { kind: "session"; meta: SessionMeta; pinned: boolean; archived: boolean }
   | { kind: "empty"; label: string };
 
@@ -41,7 +42,8 @@ export class SessionsTreeProvider
     private readonly load: () => Promise<SessionMeta[]>,
     private readonly stores: SessionStores,
     private readonly now: () => number = () => Date.now(),
-    private readonly liveStatusOf: (sessionId: string) => LiveStatus | undefined = () => undefined,
+    private readonly liveStatuses: () => Map<string, LiveStatus> | undefined = () => undefined,
+    private readonly titles: TitleCache = new TitleCache(),
   ) {}
 
   refresh(): void { this._onDidChange.fire(); }
@@ -84,17 +86,21 @@ export class SessionsTreeProvider
       return new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.None);
     }
     if (node.kind === "group") {
-      const def = node.key === "pinned" || node.key === "today";
+      const def = node.key === "pinned" || node.key === "today" || node.key === "ungrouped" || node.key.startsWith("group:");
       const expanded = this.expansion.get(node.key) ?? def;
       const state = expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed;
-      const item = new vscode.TreeItem(`${node.label} (${node.children.length})`, state);
+      // A custom group's header counts its open sessions and its closed ones separately.
+      const item = node.closed
+        ? new vscode.TreeItem(node.label, state)
+        : new vscode.TreeItem(`${node.label} (${node.children.length})`, state);
+      if (node.closed) item.description = `${node.children.length} open · ${node.closed.length} closed`;
       item.id = node.key;
       item.contextValue = "group";
       return item;
     }
     const item = new vscode.TreeItem(sessionLabel(node.meta, this.stores), vscode.TreeItemCollapsibleState.None);
     item.id = node.meta.sessionId;
-    const live = this.liveStatusOf(node.meta.sessionId);
+    const live = this.liveStatuses()?.get(node.meta.sessionId);
     const relative = formatRelative(node.meta.mtimeMs, this.now());
     item.description = live ? `${LIVE_LABEL[live.state]} · ${relative}` : relative;
     item.tooltip = `${node.meta.title}\n${node.meta.sessionId}` +
@@ -109,27 +115,45 @@ export class SessionsTreeProvider
 
   async getChildren(node?: Node): Promise<Node[]> {
     if (node) {
-      if (node.kind === "group") {
-        const pinnedSet = new Set(this.stores.pins.list());
-        const archivedSet = new Set(this.stores.archive.list());
-        return node.children.map((meta) => ({
-          kind: "session",
-          meta,
-          pinned: pinnedSet.has(meta.sessionId),
-          archived: archivedSet.has(meta.sessionId),
-        }));
+      if (node.kind !== "group") return [];
+      if (node.dated) {
+        return byDate(node.children, this.now())
+          .map((b) => ({ kind: "group", key: `${node.key}:${b.key}`, label: b.label, children: b.items }));
       }
-      return [];
+      // Titles are read only here, when a section is expanded.
+      const children = await this.titles.fill(node.children);
+      const pinnedSet = new Set(this.stores.pins.list());
+      const archivedSet = new Set(this.stores.archive.list());
+      const out: Node[] = children.map((meta) => ({
+        kind: "session",
+        meta,
+        pinned: pinnedSet.has(meta.sessionId),
+        archived: archivedSet.has(meta.sessionId),
+      }));
+      if (node.closed && node.closed.length > 0) {
+        out.push({ kind: "group", key: `closed:${node.label}`, label: "Closed", children: node.closed });
+      }
+      return out;
     }
     const sessions = await this.load();
     if (sessions.length === 0) return [{ kind: "empty", label: "No sessions for this workspace" }];
-    const groups = buildGroups(
-      sessions,
-      new Set(this.stores.pins.list()),
-      this.now(),
-      (id) => this.stores.groups.get(id),
-      new Set(this.stores.archive.list()),
-    );
-    return groups.map((g) => ({ kind: "group", key: g.key, label: g.label, children: g.items }));
+    const pinned = new Set(this.stores.pins.list());
+    const groupOf = (id: string) => this.stores.groups.get(id);
+    const archived = new Set(this.stores.archive.list());
+    const live = this.liveStatuses();
+    if (!live) {
+      // No live registry: open and closed can't be told apart, keep the original layout.
+      return buildGroups(sessions, pinned, this.now(), groupOf, archived)
+        .map((g) => ({ kind: "group", key: g.key, label: g.label, children: g.items }));
+    }
+    return buildSections(sessions, pinned, (id) => live.has(id), groupOf, archived)
+      .map((g) => ({
+        kind: "group",
+        key: g.key,
+        label: g.label,
+        children: g.items,
+        closed: g.closed,
+        dated: g.key === "history" || g.key === "archived",
+      }));
   }
 }

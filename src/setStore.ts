@@ -14,6 +14,11 @@ export class SetStore {
     if (this.has(id)) return;
     await this.memento.update(this.key, [...this.list(), id]);
   }
+  async addMany(ids: string[]): Promise<void> {
+    const current = this.list();
+    const added = ids.filter((id) => !current.includes(id));
+    if (added.length > 0) await this.memento.update(this.key, [...current, ...added]);
+  }
   async remove(id: string): Promise<void> {
     await this.memento.update(this.key, this.list().filter((x) => x !== id));
   }

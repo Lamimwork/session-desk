@@ -2,7 +2,7 @@
   "name": "claude-session-organizer",
   "displayName": "Claude Session Organizer",
   "description": "Organize your Claude Code sessions: pin, group, color, rename, and search them from a sidebar.",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "publisher": "sssooonnnggg",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -44,7 +44,8 @@
       { "command": "claudeSessionOrganizer.sessions.setEmoji", "title": "Set Emoji", "category": "Claude Session Organizer", "icon": "$(smiley)" },
       { "command": "claudeSessionOrganizer.sessions.setGroup", "title": "Set Group", "category": "Claude Session Organizer", "icon": "$(folder)" },
       { "command": "claudeSessionOrganizer.sessions.archive", "title": "Archive Session", "category": "Claude Session Organizer", "icon": "$(archive)" },
-      { "command": "claudeSessionOrganizer.sessions.unarchive", "title": "Unarchive Session", "category": "Claude Session Organizer", "icon": "$(inbox)" }
+      { "command": "claudeSessionOrganizer.sessions.unarchive", "title": "Unarchive Session", "category": "Claude Session Organizer", "icon": "$(inbox)" },
+      { "command": "claudeSessionOrganizer.sessions.archiveOld", "title": "Archive Old Sessions…", "category": "Claude Session Organizer", "icon": "$(archive)" }
     ],
     "menus": {
       "commandPalette": [
@@ -64,7 +65,8 @@
       "view/title": [
         { "command": "claudeSessionOrganizer.sessions.new", "when": "view == claudeSessionOrganizer.sessions", "group": "navigation@0" },
         { "command": "claudeSessionOrganizer.sessions.search", "when": "view == claudeSessionOrganizer.sessions", "group": "navigation@1" },
-        { "command": "claudeSessionOrganizer.sessions.refresh", "when": "view == claudeSessionOrganizer.sessions", "group": "navigation@2" }
+        { "command": "claudeSessionOrganizer.sessions.archiveOld", "when": "view == claudeSessionOrganizer.sessions", "group": "navigation@2" },
+        { "command": "claudeSessionOrganizer.sessions.refresh", "when": "view == claudeSessionOrganizer.sessions", "group": "navigation@3" }
       ],
       "view/item/context": [
         { "command": "claudeSessionOrganizer.sessions.rename", "when": "view == claudeSessionOrganizer.sessions && viewItem =~ /Session$/", "group": "inline@1" },

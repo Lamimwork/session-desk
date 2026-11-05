@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.8
+
+- Split open and closed sessions, using Claude Code's live registry: each custom group lists its open sessions, with the closed ones in a collapsed "Closed" sub-section; open sessions without a group go to "Ungrouped", closed ones to a collapsed "History" (by date). Pinned and Archived are unchanged. Without the registry, the previous layout is kept.
+- Load much less: the list is built from file dates only, and titles are read when a section is expanded, then cached until the transcript changes. Refreshes triggered by transcript writes are batched.
+- New "Archive Old Sessions…" button: archive sessions not used for more than 7, 14, 30, 60 or a custom number of days, after a confirmation with the count. Open and pinned sessions are never archived, and archived sessions keep their group.
+
 ## 0.7.7
 
 - Show the session's real name: the one set by the user (`custom-title`), else Claude Code's auto title (`ai-title`), else the first prompt. Also skip the `<local-command-caveat>` and `<browser_instruction>` blocks the VS Code extension injects, which were showing up as titles.

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { titleOf, scanSessions } from "../src/sessionScanner";
+import { titleOf, scanSessions, listSessions, TitleCache } from "../src/sessionScanner";
 
 function userText(text: string): string {
   return JSON.stringify({ type: "user", message: { role: "user", content: [{ type: "text", text }] } });
@@ -96,5 +96,21 @@ describe("scanSessions", () => {
     expect(out[0].title).toContain("22222222"); // fallback includes short id
     expect(out[1].filePath).toBe(older);
     expect(out[0].filePath).toBe(newer);
+  });
+
+  it("lists without reading titles, and the cache re-reads only changed files", async () => {
+    const file = path.join(dir, "33333333-3333-3333-3333-333333333333.jsonl");
+    fs.writeFileSync(file, userText("First"));
+    fs.utimesSync(file, new Date(1000), new Date(1000));
+    const listed = await listSessions(dir);
+    expect(listed[0].title).toBe("");
+
+    const cache = new TitleCache();
+    expect((await cache.fill(listed))[0].title).toBe("First");
+    fs.writeFileSync(file, userText("Changed"));
+    fs.utimesSync(file, new Date(1000), new Date(1000)); // same mtime: cached title kept
+    expect((await cache.fill(await listSessions(dir)))[0].title).toBe("First");
+    fs.utimesSync(file, new Date(2000), new Date(2000)); // newer mtime: re-read
+    expect((await cache.fill(await listSessions(dir)))[0].title).toBe("Changed");
   });
 });

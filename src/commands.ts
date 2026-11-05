@@ -4,6 +4,7 @@ import { formatRelative } from "./relativeTime";
 import type { SessionMeta } from "./types";
 import type { SessionStores } from "./sessionStores";
 import { SessionsTreeProvider } from "./treeProvider";
+import { staleSessions } from "./sessionsModel";
 
 const OFFICIAL_OPEN = "claude-vscode.editor.open";
 const OFFICIAL_NEW = "claude-vscode.newConversation";
@@ -40,6 +41,7 @@ export function registerCommands(
   provider: SessionsTreeProvider,
   load: () => Promise<SessionMeta[]>,
   track: (sessionId: string) => void,
+  isOpen: (sessionId: string) => boolean = () => false,
 ): void {
   const { pins, names } = stores;
   const refresh = () => provider.refresh();
@@ -155,6 +157,47 @@ export function registerCommands(
     }),
     vscode.commands.registerCommand("claudeSessionOrganizer.sessions.unarchive", async (node: { meta?: { sessionId: string } }) => {
       if (node?.meta) { await stores.archive.remove(node.meta.sessionId); refresh(); }
+    }),
+    vscode.commands.registerCommand("claudeSessionOrganizer.sessions.archiveOld", async () => {
+      const CUSTOM = "Custom…";
+      const pick = await vscode.window.showQuickPick(
+        [
+          { label: "7 days", days: 7 },
+          { label: "14 days", days: 14 },
+          { label: "30 days", days: 30 },
+          { label: "60 days", days: 60 },
+          { label: CUSTOM, days: 0 },
+        ],
+        { placeHolder: "Archive sessions not used for more than…" },
+      );
+      if (!pick) return;
+      let days = pick.days;
+      if (pick.label === CUSTOM) {
+        const input = await vscode.window.showInputBox({
+          prompt: "Archive sessions not used for more than how many days?",
+          validateInput: (v) => (/^\d+$/.test(v.trim()) && Number(v) > 0 ? undefined : "Enter a whole number of days"),
+        });
+        if (input === undefined) return;
+        days = Number(input.trim());
+      }
+      const stale = staleSessions(
+        await load(), days, Date.now(), isOpen,
+        new Set(pins.list()), new Set(stores.archive.list()),
+      );
+      if (stale.length === 0) {
+        void vscode.window.showInformationMessage(`No sessions unused for more than ${days} days.`);
+        return;
+      }
+      const ARCHIVE = "Archive";
+      const confirm = await vscode.window.showWarningMessage(
+        `Archive ${stale.length} session${stale.length === 1 ? "" : "s"} not used for more than ${days} days? ` +
+          "Open and pinned sessions are kept. Archived sessions keep their group and can be unarchived.",
+        { modal: true },
+        ARCHIVE,
+      );
+      if (confirm !== ARCHIVE) return;
+      await stores.archive.addMany(stale.map((x) => x.sessionId));
+      refresh();
     }),
   );
 }

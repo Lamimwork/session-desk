@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildGroups, bucketOf } from "../src/sessionsModel";
+import { buildGroups, bucketOf, buildSections, byDate, staleSessions } from "../src/sessionsModel";
 import type { SessionMeta } from "../src/types";
 
 const now = new Date(2026, 5, 16, 15, 0, 0).getTime();
@@ -108,5 +108,57 @@ describe("buildGroups archived", () => {
   it("omits the Archived group when nothing is archived", () => {
     const g = buildGroups([s("a", startOfToday + 1)], new Set<string>(), now);
     expect(g.some((x) => x.key === "archived")).toBe(false);
+  });
+});
+
+describe("buildSections", () => {
+  const open = (ids: string[]) => (id: string) => ids.includes(id);
+  const groupOf = (map: Record<string, string>) => (id: string): string | undefined => map[id];
+
+  it("splits each custom group into open items and closed ones", () => {
+    const sessions = [s("a", startOfToday + 3), s("b", startOfToday + 2), s("c", startOfToday + 1)];
+    const g = buildSections(sessions, new Set<string>(), open(["a"]), groupOf({ a: "Work", b: "Work", c: "Admin" }));
+    expect(g.map((x) => x.key)).toEqual(["group:Admin", "group:Work"]);
+    expect(g[0].items).toEqual([]);
+    expect(g[0].closed?.map((i) => i.sessionId)).toEqual(["c"]);
+    expect(g[1].items.map((i) => i.sessionId)).toEqual(["a"]);
+    expect(g[1].closed?.map((i) => i.sessionId)).toEqual(["b"]);
+  });
+
+  it("puts open ungrouped sessions in Ungrouped and closed ones in History", () => {
+    const sessions = [s("a", startOfToday + 2), s("b", startOfToday + 1)];
+    const g = buildSections(sessions, new Set<string>(), open(["a"]));
+    expect(g.map((x) => x.key)).toEqual(["ungrouped", "history"]);
+    expect(g[0].items.map((i) => i.sessionId)).toEqual(["a"]);
+    expect(g[1].items.map((i) => i.sessionId)).toEqual(["b"]);
+  });
+
+  it("keeps pinned first whether open or closed, and archived last", () => {
+    const sessions = [s("a", startOfToday + 3), s("b", startOfToday + 2), s("c", startOfToday + 1)];
+    const g = buildSections(sessions, new Set(["a"]), open([]), () => undefined, new Set(["c"]));
+    expect(g.map((x) => x.key)).toEqual(["pinned", "history", "archived"]);
+    expect(g[0].items.map((i) => i.sessionId)).toEqual(["a"]);
+    expect(g[2].items.map((i) => i.sessionId)).toEqual(["c"]);
+  });
+});
+
+describe("byDate", () => {
+  it("buckets by date and omits empty buckets", () => {
+    const g = byDate([s("old", startOfToday - 60 * DAY), s("today", startOfToday + 5)], now);
+    expect(g.map((x) => x.key)).toEqual(["today", "older"]);
+  });
+});
+
+describe("staleSessions", () => {
+  it("returns sessions older than the window that are not open, pinned or archived", () => {
+    const sessions = [
+      s("fresh", now - 2 * DAY),
+      s("stale", now - 20 * DAY),
+      s("staleOpen", now - 20 * DAY),
+      s("stalePinned", now - 20 * DAY),
+      s("staleArchived", now - 20 * DAY),
+    ];
+    const out = staleSessions(sessions, 14, now, (id) => id === "staleOpen", new Set(["stalePinned"]), new Set(["staleArchived"]));
+    expect(out.map((x) => x.sessionId)).toEqual(["stale"]);
   });
 });

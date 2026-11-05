@@ -11,6 +11,13 @@ describe("resolveDropAction", () => {
   it("clears when dropped on the Ungrouped header", () => {
     expect(resolveDropAction({ kind: "group", key: "ungrouped" })).toEqual({ type: "clear" });
   });
+  it("sets the group when dropped on a group's Closed sub-section", () => {
+    expect(resolveDropAction({ kind: "group", key: "closed:Backend" })).toEqual({ type: "set", group: "Backend" });
+  });
+  it("clears when dropped on History or one of its date buckets", () => {
+    expect(resolveDropAction({ kind: "group", key: "history" })).toEqual({ type: "clear" });
+    expect(resolveDropAction({ kind: "group", key: "history:today" })).toEqual({ type: "clear" });
+  });
   it("ignores drops on pinned / date headers", () => {
     expect(resolveDropAction({ kind: "group", key: "pinned" })).toEqual({ type: "ignore" });
     expect(resolveDropAction({ kind: "group", key: "today" })).toEqual({ type: "ignore" });
