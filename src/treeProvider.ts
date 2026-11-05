@@ -4,7 +4,7 @@ import { buildGroups, buildSections, byDate } from "./sessionsModel";
 import { TitleCache } from "./sessionScanner";
 import { formatRelative } from "./relativeTime";
 import { sessionLabel, groupLabel } from "./display";
-import { sessionUri, groupUri } from "./decorations";
+import { sessionUri, groupUri, closedSectionUri } from "./decorations";
 import type { SessionStores } from "./sessionStores";
 import { resolveDropAction, type DropTarget } from "./dropLogic";
 import type { LiveStatus } from "./liveStatus";
@@ -109,6 +109,8 @@ export class SessionsTreeProvider
         item.iconPath = new vscode.ThemeIcon("folder", color ? new vscode.ThemeColor(color) : undefined);
         item.resourceUri = groupUri(node.label);
       }
+      // A group's "Closed" sub-section is faded like the closed sessions in it.
+      if (node.key.startsWith("closed:")) item.resourceUri = closedSectionUri(node.label);
       return item;
     }
     const item = new vscode.TreeItem(sessionLabel(node.meta, this.stores), vscode.TreeItemCollapsibleState.None);
@@ -122,7 +124,12 @@ export class SessionsTreeProvider
       (this.stores.unread.has(node.meta.sessionId) ? "\nUnread reply" : "");    item.contextValue = node.archived ? "archivedSession" : node.pinned ? "pinnedSession" : "unpinnedSession";
     item.iconPath = live
       ? LIVE_ICON[live.state]
-      : new vscode.ThemeIcon(node.archived ? "archive" : node.pinned ? "pinned" : "comment-discussion");
+      : new vscode.ThemeIcon(
+        node.archived ? "archive" : node.pinned ? "pinned" : "comment-discussion",
+        // Closed (registry known, session not in it): fade the icon along with the name.
+        this.liveStatuses() && !this.stores.unread.has(node.meta.sessionId)
+          ? new vscode.ThemeColor("disabledForeground") : undefined,
+      );
     item.command = { command: "claudeSessionOrganizer.sessions.open", title: "Open Session", arguments: [node.meta.sessionId] };
     return item;
   }

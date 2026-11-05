@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.11
+
+- Fix: group names and the "Closed" sections no longer flash without their color or fade for an instant. The extension used to tell VS Code that every decoration had changed on each refresh (every message written by any session); now it only re-sends the ones that really changed.
+
+## 0.7.10
+
+- Faded rows: closed sessions, and sessions idle for more than 10 minutes, have their name drawn in the theme's disabled color, so the sessions really in use stand out. The delay is the setting `claudeSessionOrganizer.fadeIdleAfterMinutes` (0 = don't fade idle sessions). A session with an unread reply is never faded. A group's "Closed" sub-section header is faded too.
+
 ## 0.7.9
 
 - Unread replies: when a session finishes working and you are not looking at it, it gets a blue dot, its group header shows "N unread", and the status bar counts them. Opening the session (from the list or by switching to its editor tab) clears it; there is also "Mark as Read" on a session and "Mark All as Read" in the view menu.

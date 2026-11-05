@@ -2,7 +2,7 @@
   "name": "claude-session-organizer",
   "displayName": "Claude Session Organizer",
   "description": "Organize your Claude Code sessions: pin, group, color, rename, and search them from a sidebar.",
-  "version": "0.7.9",
+  "version": "0.7.11",
   "publisher": "sssooonnnggg",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -22,6 +22,12 @@
           "type": "boolean",
           "default": true,
           "description": "Show session counts next to group names (\"(5)\", \"2 open · 7 closed\"). Unread counts are always shown."
+        },
+        "claudeSessionOrganizer.fadeIdleAfterMinutes": {
+          "type": "number",
+          "default": 10,
+          "minimum": 0,
+          "description": "Fade the name of a session idle for this many minutes, so the ones in use stand out. Closed sessions are always faded; sessions with an unread reply never are. 0 turns off fading of idle sessions."
         }
       }
     },

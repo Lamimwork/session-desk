@@ -7,6 +7,7 @@ export type LiveState = "working" | "waiting" | "idle";
 export interface LiveStatus {
   state: LiveState;
   waitingFor?: string;   // e.g. a permission request, when state is "waiting"
+  since?: number;        // epoch ms the state was entered (registry's statusUpdatedAt)
 }
 
 /**
@@ -25,6 +26,7 @@ export function parseRegistryEntry(text: string): { pid?: number; sessionId: str
   if (!state) return undefined;
   const status: LiveStatus = { state };
   if (typeof obj.waitingFor === "string" && obj.waitingFor) status.waitingFor = obj.waitingFor;
+  if (typeof obj.statusUpdatedAt === "number") status.since = obj.statusUpdatedAt;
   return { pid: typeof obj.pid === "number" ? obj.pid : undefined, sessionId: obj.sessionId, status };
 }
 

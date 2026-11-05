@@ -18,6 +18,8 @@ import { SessionDecorations } from "./decorations";
 const LIVE_POLL_MS = 5_000;
 /** Transcripts are written continuously while a session works; batch the refreshes. */
 const REFRESH_DEBOUNCE_MS = 1_000;
+/** Re-check the idle fade this often, since it depends on the clock alone. */
+const FADE_TICK_MS = 30_000;
 
 function projectsDirFor(workspacePath: string): string {
   return path.join(os.homedir(), ".claude", "projects", encodeProjectDir(workspacePath));
@@ -54,10 +56,15 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(treeView);
 
   // Label colors and the unread badge are drawn by a decoration provider.
-  const decorations = new SessionDecorations(stores);
+  const decorations = new SessionDecorations(stores, () => liveStatuses);
+  const fadeTick = setInterval(() => decorations.refresh(), FADE_TICK_MS);
   context.subscriptions.push(
     vscode.window.registerFileDecorationProvider(decorations),
     provider.onDidChangeTreeData(() => decorations.refresh()),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("claudeSessionOrganizer.fadeIdleAfterMinutes")) decorations.refresh();
+    }),
+    { dispose: () => clearInterval(fadeTick) },
   );
 
   const tabSync = registerTabSync(context, stores.pins, provider);
