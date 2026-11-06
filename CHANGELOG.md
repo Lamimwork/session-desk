@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Hide Closed Sessions** / **Show Closed Sessions** in the view's "…" menu (setting `sessionDesk.showClosed`): hides the "Closed" sub-section inside each group. Closed sessions stay in Search and History.
+
 ## 1.0.0
 
 - Now **Session Desk for Claude Code**, an independent project (publisher `lamimwork`, ID `lamimwork.session-desk`). Commands, view and settings moved from `claudeSessionOrganizer.*` to `sessionDesk.*`.

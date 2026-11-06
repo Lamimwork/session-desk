@@ -23,6 +23,11 @@
           "default": true,
           "description": "Show session counts next to group names (\"(5)\", \"2 open · 7 closed\"). Unread counts are always shown."
         },
+        "sessionDesk.showClosed": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the \"Closed\" sub-section inside each group. When off, closed sessions stay reachable through Search and History."
+        },
         "sessionDesk.fadeIdleAfterMinutes": {
           "type": "number",
           "default": 10,
@@ -65,6 +70,8 @@
       { "command": "sessionDesk.sessions.markRead", "title": "Mark as Read", "category": "Session Desk", "icon": "$(check)" },
       { "command": "sessionDesk.view.hideCounts", "title": "Hide Group Counts", "category": "Session Desk" },
       { "command": "sessionDesk.view.showCounts", "title": "Show Group Counts", "category": "Session Desk" },
+      { "command": "sessionDesk.view.hideClosed", "title": "Hide Closed Sessions", "category": "Session Desk" },
+      { "command": "sessionDesk.view.showClosed", "title": "Show Closed Sessions", "category": "Session Desk" },
       { "command": "sessionDesk.sessions.markAllRead", "title": "Mark All as Read", "category": "Session Desk", "icon": "$(check-all)" },
       { "command": "sessionDesk.groups.setEmoji", "title": "Set Group Emoji", "category": "Session Desk", "icon": "$(smiley)" },
       { "command": "sessionDesk.groups.setColor", "title": "Set Group Color", "category": "Session Desk", "icon": "$(symbol-color)" }
@@ -97,7 +104,9 @@
         { "command": "sessionDesk.sessions.refresh", "when": "view == sessionDesk.sessions", "group": "navigation@3" },
         { "command": "sessionDesk.sessions.markAllRead", "when": "view == sessionDesk.sessions", "group": "1_unread" },
         { "command": "sessionDesk.view.hideCounts", "when": "view == sessionDesk.sessions && config.sessionDesk.showGroupCounts", "group": "2_view" },
-        { "command": "sessionDesk.view.showCounts", "when": "view == sessionDesk.sessions && !config.sessionDesk.showGroupCounts", "group": "2_view" }
+        { "command": "sessionDesk.view.showCounts", "when": "view == sessionDesk.sessions && !config.sessionDesk.showGroupCounts", "group": "2_view" },
+        { "command": "sessionDesk.view.hideClosed", "when": "view == sessionDesk.sessions && config.sessionDesk.showClosed", "group": "2_view" },
+        { "command": "sessionDesk.view.showClosed", "when": "view == sessionDesk.sessions && !config.sessionDesk.showClosed", "group": "2_view" }
       ],
       "view/item/context": [
         { "command": "sessionDesk.sessions.rename", "when": "view == sessionDesk.sessions && viewItem =~ /Session$/", "group": "inline@1" },

@@ -151,7 +151,8 @@ export class SessionsTreeProvider
         pinned: pinnedSet.has(meta.sessionId),
         archived: archivedSet.has(meta.sessionId),
       }));
-      if (node.closed && node.closed.length > 0) {
+      const showClosed = vscode.workspace.getConfiguration("sessionDesk").get<boolean>("showClosed", true);
+      if (showClosed && node.closed && node.closed.length > 0) {
         out.push({ kind: "group", key: `closed:${node.label}`, label: "Closed", children: node.closed });
       }
       return out;

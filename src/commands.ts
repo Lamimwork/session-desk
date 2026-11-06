@@ -178,6 +178,10 @@ export function registerCommands(
       vscode.workspace.getConfiguration("sessionDesk").update("showGroupCounts", false, vscode.ConfigurationTarget.Global)),
     vscode.commands.registerCommand("sessionDesk.view.showCounts", () =>
       vscode.workspace.getConfiguration("sessionDesk").update("showGroupCounts", true, vscode.ConfigurationTarget.Global)),
+    vscode.commands.registerCommand("sessionDesk.view.hideClosed", () =>
+      vscode.workspace.getConfiguration("sessionDesk").update("showClosed", false, vscode.ConfigurationTarget.Global)),
+    vscode.commands.registerCommand("sessionDesk.view.showClosed", () =>
+      vscode.workspace.getConfiguration("sessionDesk").update("showClosed", true, vscode.ConfigurationTarget.Global)),
     vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration("sessionDesk")) refresh(); }),
     vscode.commands.registerCommand("sessionDesk.sessions.markAllRead", () => markRead(stores.unread.list())),
     vscode.commands.registerCommand("sessionDesk.groups.setEmoji", async (node: { key?: string; label?: string }) => {
