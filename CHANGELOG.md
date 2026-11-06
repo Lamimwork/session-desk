@@ -3,6 +3,9 @@
 ## Unreleased
 
 - **Hide Closed Sessions** / **Show Closed Sessions** in the view's "…" menu (setting `sessionDesk.showClosed`): hides the "Closed" sub-section inside each group. Closed sessions stay in Search and History.
+- More colors: groups gain Pink, Magenta, Teal, Cyan, Lime, Gold, Brown, Indigo and Gray (contributed theme colors, overridable by themes); sessions gain Black, White, Pink, Light Blue and Gray markers.
+- Pinned sessions are never faded, whether idle or closed.
+- Set Group: typing a new name in the group list now offers "Create group …" (before, Enter closed the list and nothing happened, or picked a near-matching group). The new-group name box no longer closes when focus moves away.
 
 ## 1.0.0
 

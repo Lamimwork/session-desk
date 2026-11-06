@@ -15,6 +15,17 @@
   "homepage": "https://github.com/Lamimwork/session-desk#readme",
   "main": "./dist/extension.js",
   "contributes": {
+    "colors": [
+      { "id": "sessionDesk.pink", "description": "Group color: pink", "defaults": { "dark": "#F48FB1", "light": "#C2185B", "highContrast": "#F48FB1", "highContrastLight": "#C2185B" } },
+      { "id": "sessionDesk.magenta", "description": "Group color: magenta", "defaults": { "dark": "#E040FB", "light": "#AA00C8", "highContrast": "#E040FB", "highContrastLight": "#AA00C8" } },
+      { "id": "sessionDesk.teal", "description": "Group color: teal", "defaults": { "dark": "#4DB6AC", "light": "#00796B", "highContrast": "#4DB6AC", "highContrastLight": "#00796B" } },
+      { "id": "sessionDesk.cyan", "description": "Group color: cyan", "defaults": { "dark": "#4DD0E1", "light": "#0097A7", "highContrast": "#4DD0E1", "highContrastLight": "#0097A7" } },
+      { "id": "sessionDesk.lime", "description": "Group color: lime", "defaults": { "dark": "#C6E35A", "light": "#689F38", "highContrast": "#C6E35A", "highContrastLight": "#689F38" } },
+      { "id": "sessionDesk.gold", "description": "Group color: gold", "defaults": { "dark": "#FFC940", "light": "#B8860B", "highContrast": "#FFC940", "highContrastLight": "#B8860B" } },
+      { "id": "sessionDesk.brown", "description": "Group color: brown", "defaults": { "dark": "#C49A6C", "light": "#795548", "highContrast": "#C49A6C", "highContrastLight": "#795548" } },
+      { "id": "sessionDesk.indigo", "description": "Group color: indigo", "defaults": { "dark": "#9FA8DA", "light": "#3949AB", "highContrast": "#9FA8DA", "highContrastLight": "#3949AB" } },
+      { "id": "sessionDesk.gray", "description": "Group color: gray", "defaults": { "dark": "#A0A0A0", "light": "#616161", "highContrast": "#A0A0A0", "highContrastLight": "#616161" } }
+    ],
     "configuration": {
       "title": "Session Desk",
       "properties": {

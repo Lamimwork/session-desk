@@ -127,7 +127,8 @@ export class SessionsTreeProvider
       : new vscode.ThemeIcon(
         node.archived ? "archive" : node.pinned ? "pinned" : "comment-discussion",
         // Closed (registry known, session not in it): fade the icon along with the name.
-        this.liveStatuses() && !this.stores.unread.has(node.meta.sessionId)
+        // Pinned and unread sessions are never faded.
+        this.liveStatuses() && !node.pinned && !this.stores.unread.has(node.meta.sessionId)
           ? new vscode.ThemeColor("disabledForeground") : undefined,
       );
     item.command = { command: "sessionDesk.sessions.open", title: "Open Session", arguments: [node.meta.sessionId] };

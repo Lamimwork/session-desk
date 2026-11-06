@@ -16,7 +16,11 @@ export function closedSectionUri(name: string): vscode.Uri {
   return vscode.Uri.from({ scheme: SCHEME, path: `/closed/${encodeURIComponent(name)}` });
 }
 
-/** Theme colors offered for groups (they follow the user's theme). */
+/**
+ * Colors offered for groups. The first six are the theme's chart colors; the
+ * rest are contributed in package.json (`contributes.colors`), so a theme can
+ * still override them.
+ */
 export const GROUP_COLORS: { label: string; value: string }[] = [
   { label: "Red", value: "charts.red" },
   { label: "Orange", value: "charts.orange" },
@@ -24,6 +28,15 @@ export const GROUP_COLORS: { label: string; value: string }[] = [
   { label: "Green", value: "charts.green" },
   { label: "Blue", value: "charts.blue" },
   { label: "Purple", value: "charts.purple" },
+  { label: "Pink", value: "sessionDesk.pink" },
+  { label: "Magenta", value: "sessionDesk.magenta" },
+  { label: "Teal", value: "sessionDesk.teal" },
+  { label: "Cyan", value: "sessionDesk.cyan" },
+  { label: "Lime", value: "sessionDesk.lime" },
+  { label: "Gold", value: "sessionDesk.gold" },
+  { label: "Brown", value: "sessionDesk.brown" },
+  { label: "Indigo", value: "sessionDesk.indigo" },
+  { label: "Gray", value: "sessionDesk.gray" },
 ];
 
 /**
@@ -73,7 +86,8 @@ export class SessionDecorations implements vscode.FileDecorationProvider {
     }
     if (kind === "session") {
       const minutes = vscode.workspace.getConfiguration("sessionDesk").get<number>("fadeIdleAfterMinutes", 10);
-      if (isFaded(rest, this.liveStatuses(), false, this.now(), minutes * 60_000)) {
+      // Pinned sessions are never faded, open or closed.
+      if (isFaded(rest, this.liveStatuses(), this.stores.pins.has(rest), this.now(), minutes * 60_000)) {
         return new vscode.FileDecoration(undefined, undefined, new vscode.ThemeColor("disabledForeground"));
       }
     }

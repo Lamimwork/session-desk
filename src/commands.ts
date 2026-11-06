@@ -129,6 +129,11 @@ export function registerCommands(
         { label: "🔵 Blue", value: "🔵" },
         { label: "🟣 Purple", value: "🟣" },
         { label: "🟤 Brown", value: "🟤" },
+        { label: "⚫ Black", value: "⚫" },
+        { label: "⚪ White", value: "⚪" },
+        { label: "🩷 Pink", value: "🩷" },
+        { label: "🩵 Light Blue", value: "🩵" },
+        { label: "🩶 Gray", value: "🩶" },
         { label: "None", value: "" },
       ];
       const pick = await vscode.window.showQuickPick(options, { placeHolder: "Set session color" });
@@ -148,19 +153,39 @@ export function registerCommands(
       if (!node?.meta) return;
       const id = node.meta.sessionId;
       const existing = [...new Set(Object.values(stores.groups.all()))].sort();
-      const CREATE = "$(add) Create new group…";
-      const REMOVE = "$(close) Remove from group";
-      const picks = [...existing, CREATE, ...(stores.groups.get(id) ? [REMOVE] : [])];
-      const choice = await vscode.window.showQuickPick(picks, { placeHolder: "Set session group" });
-      if (choice === undefined) return;
-      if (choice === REMOVE) {
+      type Pick = vscode.QuickPickItem & { action: "set" | "create" | "remove"; group?: string };
+      const base: Pick[] = [
+        ...existing.map((g): Pick => ({ label: g, action: "set", group: g })),
+        { label: "$(add) Create new group…", action: "create" },
+        ...(stores.groups.get(id) ? [{ label: "$(close) Remove from group", action: "remove" } as Pick] : []),
+      ];
+      // Typing a name that isn't an existing group offers to create it, so Enter
+      // never closes the list silently or drops the session in a near-match.
+      const choice = await new Promise<Pick | undefined>((resolve) => {
+        const qp = vscode.window.createQuickPick<Pick>();
+        qp.placeholder = "Pick a group, or type a new group name";
+        qp.items = base;
+        qp.onDidChangeValue((value) => {
+          const name = value.trim();
+          const exact = existing.some((g) => g.toLowerCase() === name.toLowerCase());
+          qp.items = name && !exact
+            ? [{ label: `$(add) Create group "${name}"`, action: "set", group: name, alwaysShow: true }, ...base]
+            : base;
+        });
+        let picked: Pick | undefined;
+        qp.onDidAccept(() => { picked = qp.selectedItems[0] ?? qp.activeItems[0]; qp.hide(); });
+        qp.onDidHide(() => { qp.dispose(); resolve(picked); });
+        qp.show();
+      });
+      if (!choice) return;
+      if (choice.action === "remove") {
         await stores.groups.clear(id);
-      } else if (choice === CREATE) {
-        const name = await vscode.window.showInputBox({ prompt: "New group name" });
+      } else if (choice.action === "create") {
+        const name = await vscode.window.showInputBox({ prompt: "New group name", ignoreFocusOut: true });
         if (name === undefined || name.trim() === "") return;
-        await stores.groups.set(id, name);
-      } else {
-        await stores.groups.set(id, choice);
+        await stores.groups.set(id, name.trim());
+      } else if (choice.group) {
+        await stores.groups.set(id, choice.group);
       }
       refresh();
     }),

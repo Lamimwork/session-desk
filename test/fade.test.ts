@@ -22,7 +22,7 @@ describe("isFaded", () => {
       expect(isFaded(id, live, false, now, 10 * MIN)).toBe(false);
     }
   });
-  it("never fades unread replies, nor anything without the registry", () => {
+  it("never fades unread or pinned sessions (keepBright), nor anything without the registry", () => {
     expect(isFaded("closed", live, true, now, 10 * MIN)).toBe(false);
     expect(isFaded("idleOld", live, true, now, 10 * MIN)).toBe(false);
     expect(isFaded("closed", undefined, false, now, 10 * MIN)).toBe(false);
