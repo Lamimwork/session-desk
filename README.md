@@ -1,53 +1,53 @@
-# Claude Session Organizer
+# Session Desk for Claude Code
 
-**English** | [简体中文](README.zh-CN.md)
-
-[![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/sssooonnnggg.claude-session-organizer?label=VS%20Marketplace&color=D97757)](https://marketplace.visualstudio.com/items?itemName=sssooonnnggg.claude-session-organizer)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/sssooonnnggg.claude-session-organizer)](https://marketplace.visualstudio.com/items?itemName=sssooonnnggg.claude-session-organizer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Quality-of-life enhancements for the official [Claude Code](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code) VSCode extension. Browse, pin, search, rename, color-code, and group your Claude Code sessions from a dedicated sidebar.
+A desk for your Claude Code sessions in VS Code: see which ones are working, which need you and which have an unread reply, and keep them in groups with their own color and emoji.
 
-> **Unofficial, community add-on** — not affiliated with Anthropic. It runs alongside the official Claude Code extension and never modifies its files.
+> **Unofficial add-on**, not affiliated with Anthropic. It runs alongside the official Claude Code extension and never modifies its files.
 
 ![Sessions sidebar](media/screenshots/sessions.png)
 
 ## Features
 
-- 📌 **Pin** important sessions to a top group so they never get buried by newer ones.
-- 🗂️ **Date grouping** — Today / Yesterday / Previous 7 Days / Previous 30 Days / Older.
-- 📁 **Custom groups** — organize sessions into your own groups; once you use them, the list groups by them (Pinned → your groups → Ungrouped) instead of by date.
-- 🎨 **Color dots** and 😀 **emoji** per session, shown at the start of the label.
-- 🔍 **Search** sessions by name (search icon, or "Search Sessions" in the command palette).
-- ✏️ **Rename** sessions, 🗑️ **delete** them (to the trash), and 📋 **copy** their ID / transcript path.
-- 🖱️ **Open** a session with one click — it reuses the official extension's own open command, so it opens exactly as it would natively.
-- 🔄 Auto-refreshes as sessions change, plus a manual refresh button.
-- 🔗 **Pin sync** — pinning a session's editor tab also pins it in the list (one-way).
-- 🖐️ **Drag** a session onto a group (or Ungrouped) to organize it; group headers show a count.
-- 🗄️ **Archive** sessions into a collapsed group at the bottom (their settings are kept); unarchive to restore.
-- ➕ **New Session** button in the view title to start a fresh Claude Code session.
+- 🏷️ **Real names**: each session shows the title Claude Code gave it (or the one you set).
+- 🟢 **Live status**: working / needs you / idle, from Claude Code's live registry; the status bar counts them across all windows.
+- 🔵 **Unread replies**: a session that finished while you weren't looking gets a blue dot until you open it.
+- 📂 **Open and closed apart**: each group lists its open sessions, with the closed ones in a collapsed "Closed" section.
+- 🌫️ **Fade**: closed sessions and sessions idle for a while are drawn faded, so the ones in use stand out.
+- 📁 **Groups** with emoji and color; drag a session onto a group to move it.
+- 📌 **Pin**, ✏️ **rename**, 🎨 **color**, 😀 **emoji**, 🔍 **search**, 🗑️ **delete** (to the trash), 📋 **copy** ID / transcript path.
+- 🗄️ **Archive** sessions, or archive everything older than a date in one go.
 
 ## Requirements
 
-The official **Claude Code** extension (`anthropic.claude-code`) must be installed and enabled — this extension reuses its "open session" command.
+The official **Claude Code** extension (`anthropic.claude-code`) must be installed and enabled; Session Desk reuses its "open session" command.
 
 ## Install
 
-Search **"Claude Session Organizer"** in the VS Code Extensions view, or install from the [Marketplace](https://marketplace.visualstudio.com/items?itemName=sssooonnnggg.claude-session-organizer).
+Not on the Marketplace. Build and install the `.vsix`:
 
-Then click the **pushpin icon** in the activity bar, open a workspace where you've used Claude Code, and your sessions appear. Hover a row for inline actions (rename, pin, delete); right-click for color, emoji, group, and copy.
+```
+npm install
+npx @vscode/vsce package
+code --install-extension session-desk-1.0.0.vsix
+```
+
+## Coming from Claude Session Organizer
+
+Session Desk has a new extension ID, so VS Code gives it empty storage. To bring over your pins, names, groups and colors, put the old extension's state (the JSON stored in VS Code's `state.vscdb` under `sssooonnnggg.claude-session-organizer`) in `import.json` inside Session Desk's global storage folder (`.../globalStorage/lamimwork.session-desk/`). It is imported on the next start and renamed to `imported.json`. Settings moved from `claudeSessionOrganizer.*` to `sessionDesk.*`.
 
 ## How it works
 
-It reads Claude Code's local session transcripts from `~/.claude/projects/<encoded-workspace>/*.jsonl` (read-only) to build the list, and derives each session's title from its first prompt. Your pins, names, colors, emojis, and groups are stored in this extension's own VS Code storage.
+It reads Claude Code's local transcripts from `~/.claude/projects/<encoded-workspace>/*.jsonl` and the live registry in `~/.claude/sessions` (read-only). Your pins, names, colors, emojis and groups are stored in this extension's own VS Code storage.
 
 ## Privacy
 
-Everything stays on your machine. It only reads local files under `~/.claude/projects`, stores its settings locally, and makes **no network requests**.
+Everything stays on your machine: it only reads local files under `~/.claude`, stores its settings locally and makes **no network requests**.
 
-## Roadmap
+## Credits
 
-This extension is a home for small Claude Code enhancements. Ideas under consideration: export a session to Markdown, an all-projects view, sort options, and localization. Suggestions and bug reports welcome via [issues](https://github.com/sssooonnnggg/claude-session-organizer/issues).
+Session Desk started as a fork of [Claude Session Organizer](https://github.com/sssooonnnggg/claude-session-organizer) by sssooonnnggg (MIT), up to its version 0.7.6. Live status, real names, unread replies, open/closed split, fading, group colors and the rest since then are Session Desk's own.
 
 ## License
 

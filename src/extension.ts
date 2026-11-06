@@ -13,6 +13,7 @@ import { registerTabSync } from "./tabSync";
 import { readLiveStatuses, statusKey, type LiveStatus } from "./liveStatus";
 import { finishedTurns, sessionForTabLabel } from "./unread";
 import { SessionDecorations } from "./decorations";
+import { importLegacyState } from "./importState";
 
 /** How often to re-check the live registry, so sessions whose process died drop out. */
 const LIVE_POLL_MS = 5_000;
@@ -46,7 +47,7 @@ export function activate(context: vscode.ExtensionContext): void {
   let liveStatuses: Map<string, LiveStatus> | undefined;
   const provider = new SessionsTreeProvider(load, stores, undefined, () => liveStatuses, titles);
 
-  const treeView = vscode.window.createTreeView("claudeSessionOrganizer.sessions", {
+  const treeView = vscode.window.createTreeView("sessionDesk.sessions", {
     treeDataProvider: provider,
     dragAndDropController: provider,
     canSelectMany: true,
@@ -54,6 +55,7 @@ export function activate(context: vscode.ExtensionContext): void {
   treeView.onDidExpandElement((e) => { if (e.element.kind === "group") provider.setGroupExpanded(e.element.key, true); });
   treeView.onDidCollapseElement((e) => { if (e.element.kind === "group") provider.setGroupExpanded(e.element.key, false); });
   context.subscriptions.push(treeView);
+  void importLegacyState(context).then((done) => { if (done) provider.refresh(); }, () => undefined);
 
   // Label colors and the unread badge are drawn by a decoration provider.
   const decorations = new SessionDecorations(stores, () => liveStatuses);
@@ -62,7 +64,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerFileDecorationProvider(decorations),
     provider.onDidChangeTreeData(() => decorations.refresh()),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("claudeSessionOrganizer.fadeIdleAfterMinutes")) decorations.refresh();
+      if (e.affectsConfiguration("sessionDesk.fadeIdleAfterMinutes")) decorations.refresh();
     }),
     { dispose: () => clearInterval(fadeTick) },
   );
@@ -114,7 +116,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // in ~/.claude/sessions. Counted across all workspaces in the status bar.
   const sessionsDir = path.join(os.homedir(), ".claude", "sessions");
   const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
-  statusBar.command = "workbench.view.extension.claudeSessionOrganizer";
+  statusBar.command = "workbench.view.extension.sessionDesk";
   context.subscriptions.push(statusBar);
 
   function renderStatus(): void {
@@ -128,7 +130,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (unread) parts.push(`$(circle-filled) ${unread} unread`);
     if (parts.length) {
       statusBar.text = parts.join("  ");
-      statusBar.tooltip = "Claude sessions — click to open the organizer";
+      statusBar.tooltip = "Claude sessions — click to open Session Desk";
       statusBar.show();
     } else {
       statusBar.hide();

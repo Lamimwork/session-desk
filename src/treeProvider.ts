@@ -20,7 +20,7 @@ const LIVE_LABEL: Record<LiveStatus["state"], string> = {
   idle: "idle",
 };
 
-const DND_MIME = "application/vnd.code.tree.claudeSessionOrganizer";
+const DND_MIME = "application/vnd.code.tree.sessionDesk";
 
 type Node =
   | { kind: "group"; key: string; label: string; children: SessionMeta[]; closed?: SessionMeta[]; dated?: boolean }
@@ -93,7 +93,7 @@ export class SessionsTreeProvider
       const custom = node.key.startsWith("group:");
       const name = custom ? groupLabel(node.label, this.stores) : node.label;
       // A custom group's header counts its open sessions and its closed ones separately.
-      const counts = vscode.workspace.getConfiguration("claudeSessionOrganizer").get<boolean>("showGroupCounts", true);
+      const counts = vscode.workspace.getConfiguration("sessionDesk").get<boolean>("showGroupCounts", true);
       const item = node.closed || !counts
         ? new vscode.TreeItem(name, state)
         : new vscode.TreeItem(`${name} (${node.children.length})`, state);
@@ -130,7 +130,7 @@ export class SessionsTreeProvider
         this.liveStatuses() && !this.stores.unread.has(node.meta.sessionId)
           ? new vscode.ThemeColor("disabledForeground") : undefined,
       );
-    item.command = { command: "claudeSessionOrganizer.sessions.open", title: "Open Session", arguments: [node.meta.sessionId] };
+    item.command = { command: "sessionDesk.sessions.open", title: "Open Session", arguments: [node.meta.sessionId] };
     return item;
   }
 

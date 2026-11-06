@@ -3,7 +3,7 @@ import type { SessionStores } from "./sessionStores";
 import type { LiveStatus } from "./liveStatus";
 import { isFaded } from "./fade";
 
-const SCHEME = "claude-session-organizer";
+const SCHEME = "session-desk";
 
 export function sessionUri(sessionId: string): vscode.Uri {
   return vscode.Uri.from({ scheme: SCHEME, path: `/session/${sessionId}` });
@@ -72,7 +72,7 @@ export class SessionDecorations implements vscode.FileDecorationProvider {
       return new vscode.FileDecoration("●", "Unread reply", new vscode.ThemeColor("charts.blue"));
     }
     if (kind === "session") {
-      const minutes = vscode.workspace.getConfiguration("claudeSessionOrganizer").get<number>("fadeIdleAfterMinutes", 10);
+      const minutes = vscode.workspace.getConfiguration("sessionDesk").get<number>("fadeIdleAfterMinutes", 10);
       if (isFaded(rest, this.liveStatuses(), false, this.now(), minutes * 60_000)) {
         return new vscode.FileDecoration(undefined, undefined, new vscode.ThemeColor("disabledForeground"));
       }

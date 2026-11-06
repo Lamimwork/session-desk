@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+- Now **Session Desk for Claude Code**, an independent project (publisher `lamimwork`, ID `lamimwork.session-desk`). Commands, view and settings moved from `claudeSessionOrganizer.*` to `sessionDesk.*`.
+- One-time import of the old extension's pins, names, groups and colors from `import.json` in the global storage folder (see README).
+- 0.7.6 and earlier are the original Claude Session Organizer; 0.7.7 to 0.7.11 were this fork's builds under the old name.
+
 ## 0.7.11
 
 - Fix: group names and the "Closed" sections no longer flash without their color or fade for an instant. The extension used to tell VS Code that every decoration had changed on each refresh (every message written by any session); now it only re-sends the ones that really changed.
