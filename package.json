@@ -10,9 +10,9 @@
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Other"],
   "keywords": ["claude", "claude code", "anthropic", "sessions", "pin", "productivity"],
-  "repository": { "type": "git", "url": "https://github.com/Lamimwork/claude-session-organizer.git" },
-  "bugs": { "url": "https://github.com/Lamimwork/claude-session-organizer/issues" },
-  "homepage": "https://github.com/Lamimwork/claude-session-organizer#readme",
+  "repository": { "type": "git", "url": "https://github.com/Lamimwork/session-desk.git" },
+  "bugs": { "url": "https://github.com/Lamimwork/session-desk/issues" },
+  "homepage": "https://github.com/Lamimwork/session-desk#readme",
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
